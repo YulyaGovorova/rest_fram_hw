@@ -18,20 +18,20 @@ class Command(BaseCommand):
         Course.objects.all().delete()
 
         users = []
-        for i in range(4):
-            email = f'user_{i+1}@mail.ru'
-            password = '1'
-            phone = fake.numerify()
-            city = fake.city()
-            country = fake.country()
-            user = User.objects.create(email=email, password=password, phone=phone, city=city, country=country)
-            user.set_password(user.password)
-            user.save()
-            users.append(user)
-        #
-        # for user in self.User.objects.all():
+        # for i in range(4):
+        #     email = f'user_{i+1}@mail.ru'
+        #     password = '1'
+        #     phone = fake.numerify()
+        #     city = fake.city()
+        #     country = fake.country()
+        #     user = User.objects.create(email=email, password=password, phone=phone, city=city, country=country)
         #     user.set_password(user.password)
         #     user.save()
+        #     users.append(user)
+        #
+        for user in self.User.objects.all():
+            user.set_password(user.password)
+            user.save()
 
         courses = []
         for _ in range(3):
