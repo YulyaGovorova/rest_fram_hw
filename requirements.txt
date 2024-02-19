@@ -9,3 +9,4 @@ setuptools
 sqlparse
 tzdata
 faker
+django-filter
