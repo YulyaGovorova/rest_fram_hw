@@ -10,7 +10,15 @@ from main.serializers import CourseSerializers, LessonSerializers, PaymentSerial
 class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializers
     queryset = Course.objects.all()
-    permission_classes = [IsAuthenticated, UserOwner]
+
+    def get_permissions(self):
+        if self.action == 'create':
+            permission_classes = [IsAuthenticated]
+        elif self.action in ['retrieve', 'update', 'destroy']:
+            permission_classes = [IsAuthenticated, UserOwner]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
 
     def perform_create(self, serializer):
         new_course = serializer.save()
@@ -20,7 +28,7 @@ class CourseViewSet(viewsets.ModelViewSet):
 
 class LessonCreateAPIView(generics.CreateAPIView):
     serializer_class = LessonSerializers
-    permission_classes = [IsAuthenticated, UserOwner]
+    permission_classes = [IsAuthenticated, Moderator]
 
     def perform_create(self, serializer):
         new_lesson = serializer.save()
@@ -31,13 +39,13 @@ class LessonCreateAPIView(generics.CreateAPIView):
 class LessonListAPIView(generics.ListAPIView):
     serializer_class = LessonSerializers
     queryset = Lesson.objects.all()
-    permission_classes = []
+    permission_classes = [IsAuthenticated]
 
 
 class LessonRetrieveAPIView(generics.RetrieveAPIView):
     serializer_class = LessonSerializers
     queryset = Lesson.objects.all()
-    permission_classes = [Moderator | UserOwner]
+    permission_classes = [IsAuthenticated, Moderator | UserOwner]
 
 
 class LessonUpdateAPIView(generics.UpdateAPIView):
