@@ -10,7 +10,7 @@ from main.serializers import CourseSerializers, LessonSerializers, PaymentSerial
 class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializers
     queryset = Course.objects.all()
-    permission_classes = [Moderator | UserOwner]
+    permission_classes = [IsAuthenticated, UserOwner]
 
     def perform_create(self, serializer):
         new_course = serializer.save()
@@ -18,10 +18,9 @@ class CourseViewSet(viewsets.ModelViewSet):
         new_course.save()
 
 
-
 class LessonCreateAPIView(generics.CreateAPIView):
     serializer_class = LessonSerializers
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, UserOwner]
 
     def perform_create(self, serializer):
         new_lesson = serializer.save()
@@ -29,12 +28,10 @@ class LessonCreateAPIView(generics.CreateAPIView):
         new_lesson.save()
 
 
-
 class LessonListAPIView(generics.ListAPIView):
     serializer_class = LessonSerializers
     queryset = Lesson.objects.all()
-    permission_classes = [Moderator | UserOwner]
-
+    permission_classes = []
 
 
 class LessonRetrieveAPIView(generics.RetrieveAPIView):
@@ -43,18 +40,16 @@ class LessonRetrieveAPIView(generics.RetrieveAPIView):
     permission_classes = [Moderator | UserOwner]
 
 
-
 class LessonUpdateAPIView(generics.UpdateAPIView):
     serializer_class = LessonSerializers
     queryset = Lesson.objects.all()
-    permission_classes = [Moderator | UserOwner]
-
+    permission_classes = [IsAuthenticated, UserOwner]
 
 
 class LessonDestroyAPIView(generics.DestroyAPIView):
+    serializer_class = LessonSerializers
     queryset = Lesson.objects.all()
-    permission_classes = [Moderator | UserOwner]
-
+    permission_classes = [IsAuthenticated, UserOwner]
 
 
 class PaymentListAPIView(generics.ListAPIView):
@@ -66,17 +61,13 @@ class PaymentListAPIView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
 
-
-
 class PaymentRetrieveAPIView(generics.RetrieveAPIView):
     serializer_class = PaymentSerializers
     queryset = Payment.objects.all()
     permission_classes = [IsAuthenticated]
 
 
-
 class PaymentCreateAPIView(generics.CreateAPIView):
     serializer_class = PaymentCreateSerializer
     queryset = Payment.objects.all()
     permission_classes = [IsAuthenticated]
-

@@ -4,8 +4,12 @@ from rest_framework.permissions import BasePermission
 
 class Moderator(BasePermission):
     def has_permission(self, request, view):
-        if request.user.groups.filter(name='moderator') and permissions.SAFE_METHODS:
+        if request.user.groups.filter(name='moderator') and request.method in permissions.SAFE_METHODS:
             return True
+        return False
+
+    def has_object_permission(self, request, view, obj):
+        return self.has_permission(request, view)
 
 
 class UserOwner(BasePermission):

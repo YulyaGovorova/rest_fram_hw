@@ -1,3 +1,5 @@
+from django.contrib.auth.models import Permission, Group
+from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand
 from main.models import Payment, Lesson, Course
 from faker import Faker
@@ -9,8 +11,24 @@ fake = Faker()
 
 
 class Command(BaseCommand):
-
     def handle(self, *args, **kwargs):
+        moderator_group, created = Group.objects.get_or_create(name='Moderator')
+
+        # Получить разрешение для работы с курсами
+        course_content_type = ContentType.objects.get_for_model(Course)
+        add_course_permission = Permission.objects.get(content_type=course_content_type, codename='add_course')
+        change_course_permission = Permission.objects.get(content_type=course_content_type, codename='change_course')
+        delete_course_permission = Permission.objects.get(content_type=course_content_type, codename='delete_course')
+
+        # Получить разрешение для работы с уроками
+        lesson_content_type = ContentType.objects.get_for_model(Lesson)
+        add_lesson_permission = Permission.objects.get(content_type=lesson_content_type, codename='add_lesson')
+        change_lesson_permission = Permission.objects.get(content_type=lesson_content_type, codename='change_lesson')
+        delete_lesson_permission = Permission.objects.get(content_type=lesson_content_type, codename='delete_lesson')
+
+        # Присвоить разрешения группе модераторов
+        moderator_group.permissions.add(add_course_permission, change_course_permission, delete_course_permission,
+                                        add_lesson_permission, change_lesson_permission, delete_lesson_permission)
 
         User.objects.exclude(email='admin3@sky.pro').delete()
         Payment.objects.all().delete()
@@ -28,8 +46,6 @@ class Command(BaseCommand):
             user.set_password(user.password)
             user.save()
             users.append(user)
-
-
 
         courses = []
         for _ in range(3):
@@ -67,4 +83,3 @@ class Command(BaseCommand):
                 payment_method=payment_method,
             )
             payments.append(payment)
-
