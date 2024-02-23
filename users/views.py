@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 
 class UserCreateAPIView(generics.CreateAPIView):
     serializer_class = UserSerializer
+    permission_classes = [UserOwner]
 
     def perform_create(self, serializer):
         new_user = serializer.save()
@@ -19,7 +20,7 @@ class UserCreateAPIView(generics.CreateAPIView):
 class UserUpdateAPIView(generics.UpdateAPIView):
     serializer_class = UserSerializer
     queryset = User.objects.all()
-    permission_classes = [IsAuthenticated, UserOwner]
+    permission_classes = [UserOwner]
 
 
     def perform_update(self, serializer):
