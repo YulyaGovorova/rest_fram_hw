@@ -13,12 +13,16 @@ class CourseViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action == 'create':
-            permission_classes = [IsAuthenticated]
-        elif self.action in ['retrieve', 'update', 'destroy']:
-            permission_classes = [IsAuthenticated, UserOwner]
-        else:
-            permission_classes = [IsAuthenticated]
-        return [permission() for permission in permission_classes]
+            self.permission_classes = [IsAuthenticated, Moderator]
+        elif self.action == 'list':
+            self.permission_classes = [IsAuthenticated]
+        elif self.action == 'retrieve':
+            self.permission_classes = [IsAuthenticated, Moderator | UserOwner]
+        elif self.action == 'update':
+            self.permission_classes = [IsAuthenticated, UserOwner]
+        elif self.action == 'destroy':
+            self.permission_classes = [IsAuthenticated, UserOwner]
+        return [permission() for permission in self.permission_classes]
 
     def perform_create(self, serializer):
         new_course = serializer.save()
