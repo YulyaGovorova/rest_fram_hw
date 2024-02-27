@@ -4,11 +4,13 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from main.permissions import UserOwner, Moderator
 from users.models import User
 from users.serialisers import UserSerializer, MyTokenObtainPairSerializer
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
+
 
 class UserCreateAPIView(generics.CreateAPIView):
     serializer_class = UserSerializer
-    permission_classes = [UserOwner]
+    # permission_classes = [UserOwner]
+    permission_classes = [AllowAny]
 
     def perform_create(self, serializer):
         new_user = serializer.save()
