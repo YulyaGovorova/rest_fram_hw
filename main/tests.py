@@ -200,6 +200,7 @@ class CourseTestCase(InitialTestCase):
 
     def test_create(self):
         """Тестирование создания курса"""
+
         data = {
             'name': 'test_course_2',
             'description': 'test_course_2',

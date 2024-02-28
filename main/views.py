@@ -1,7 +1,7 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, generics, status
 from rest_framework.filters import OrderingFilter
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from main.models import Course, Lesson, Payment, Subscription
@@ -9,7 +9,7 @@ from main.pagination import CourseLessonPaginator
 from main.permissions import Moderator, UserOwner, UserPerm
 from main.serializers import CourseSerializers, LessonSerializers, PaymentSerializers, PaymentCreateSerializer, \
     SubscriptionSerializer
-
+from main.tasks import check_update_course
 
 class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializers
@@ -18,7 +18,7 @@ class CourseViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action == 'create':
-            self.permission_classes = [IsAuthenticated, Moderator]
+            self.permission_classes = [AllowAny]
         elif self.action == 'list':
             self.permission_classes = [IsAuthenticated]
         elif self.action == 'retrieve':
@@ -29,15 +29,21 @@ class CourseViewSet(viewsets.ModelViewSet):
             self.permission_classes = [IsAuthenticated, UserOwner]
         return [permission() for permission in self.permission_classes]
 
-    def perform_create(self, serializer):
-        new_course = serializer.save()
-        new_course.user = self.request.user
-        new_course.save()
+    # def perform_create(self, serializer):
+    #     new_course = serializer.save()
+    #     new_course.user = self.request.user
+    #     new_course.save()
+
+    def perform_update(self, serializer):
+        course_update = serializer.save()
+        if course_update:
+            check_update_course.delay(course_update.course_id)
 
 
 class LessonCreateAPIView(generics.CreateAPIView):
     serializer_class = LessonSerializers
-    permission_classes = [IsAuthenticated, Moderator]
+    # permission_classes = [IsAuthenticated, Moderator]
+    permission_classes = [AllowAny]
 
     def perform_create(self, serializer):
         new_lesson = serializer.save()
