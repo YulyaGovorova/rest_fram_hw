@@ -1,6 +1,9 @@
+import stripe
+import os
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, generics, status
 from rest_framework.filters import OrderingFilter
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
@@ -9,6 +12,7 @@ from main.pagination import CourseLessonPaginator
 from main.permissions import Moderator, UserOwner, UserPerm
 from main.serializers import CourseSerializers, LessonSerializers, PaymentSerializers, PaymentCreateSerializer, \
     SubscriptionSerializer
+
 from main.tasks import check_update_course
 
 class CourseViewSet(viewsets.ModelViewSet):
@@ -18,7 +22,7 @@ class CourseViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action == 'create':
-            self.permission_classes = [AllowAny]
+            self.permission_classes = [IsAuthenticated, Moderator]
         elif self.action == 'list':
             self.permission_classes = [IsAuthenticated]
         elif self.action == 'retrieve':
@@ -93,8 +97,23 @@ class PaymentRetrieveAPIView(generics.RetrieveAPIView):
 
 class PaymentCreateAPIView(generics.CreateAPIView):
     serializer_class = PaymentCreateSerializer
+    stripe.api_key = os.getenv('STRIPE_API_KEY')
+    serializer_class = PaymentCreateSerializer
     queryset = Payment.objects.all()
-    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+
+        session_id = self.request.query_params.get('session_id')
+        session = stripe.checkout.Session.retrieve(session_id)
+
+        payment_id = session.metadata['payment_id']
+        obj = get_object_or_404(self.get_queryset(), pk=payment_id)
+
+        if not obj.is_paid:
+            if session.payment_status == 'paid':
+                obj.is_paid = True
+                obj.save()
+        return obj
 
 
 class SubscriptionCreateAPIView(generics.CreateAPIView):
