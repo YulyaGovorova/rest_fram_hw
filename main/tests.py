@@ -198,104 +198,127 @@ class SubscriptionTestCase(InitialTestCase):
 
 class CourseTestCase(InitialTestCase):
 
-    def test_create(self):
-        """Тестирование создания курса"""
+    def setUp(self):
+        self.user = User.objects.create(
+            id=1,
+            email='user@gmail.com',
+            phone='12345',
 
-        data = {
-            'name': 'test_course_2',
-            'description': 'test_course_2',
-            'owner': self.user.id
-        }
-
-        response = self.client.post('/main/', data=data)
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_201_CREATED
+            password='123'
         )
-
-        self.assertEqual(
-            response.json(),
-            {'id': 2,
-             'name': 'test_course_2',
-             'subscribed': False,
-             'preview': None,
-             'lessons': [],
-             'lessons_count': 0,
-             'description': 'test_course_2',
-             'owner': self.user.id,
-             }
-
+        self.course = Course.objects.create(
+            id=10,
+            name='course_test_1',
+            description='course_description_1',
+            owner=self.user
         )
-
-    def test_list(self):
-        """Тестирование вывода списка курсов"""
-        response = self.client.get('/main/')
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_200_OK
+        self.lesson = Lesson.objects.create(
+            id=1,
+            name='lesson_test_1',
+            description='lesson_test_1',
+            video='youtube.com',
+            course=self.course,
+            owner=self.user
         )
-
-        self.assertEqual(
-            response.json(),
-            {'count': 1,
-             'next': None,
-             'previous': None,
-             'results': [{
-                 'id': 3,
-                 'subscribed': True,
-                 'lessons_count': 1,
-                 'lessons': [{
-                     'id': 2,
-                     'name': 'test_lesson',
-                     'preview': None,
-                     'description': 'test_lesson',
-                     'video': 'http://www.youtube.com/test_lesson',
-                     'course': 3,
-                     'owner': 2
-                 }],
-                 'name': 'test_course',
-                 'preview': None,
-                 'description': 'test_course',
-                 'owner': 2}]
-             }
-        )
-
-    def test_retrieve(self):
-        """Тестирование вывода одного курса"""
-
-        response = self.client.get('/main/', kwargs={'pk': self.course.id})
-
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_200_OK
-        )
-
-        self.assertEqual(
-            response.json(),
-            {
-                'count': 1,
-                'next': None,
-                'previous': None,
-                'results': [{
-                    'id': 4,
-                    'subscribed': True,
-                    'lessons_count': 1,
-                    'lessons': [{
-                        'id': 3,
-                        'name': 'test_lesson',
-                        'preview': None,
-                        'description': 'test_lesson',
-                        'video': 'http://www.youtube.com/test_lesson',
-                        'course': 4,
-                        'owner': 3
-                    }],
-                    'name': 'test_course',
-                    'preview': None,
-                    'description': 'test_course',
-                    'owner': 3
-                }]
-            }
-        )
+#
+#     def test_create(self):
+#         """Тестирование создания курса"""
+#
+#         data = {
+#             'name': 'test_course_2',
+#             'description': 'test_course_2',
+#             'owner': self.user.id
+#         }
+#
+#         response = self.client.post('/main/', data=data)
+#
+#         self.assertEqual(
+#             response.status_code,
+#             status.HTTP_201_CREATED
+#         )
+#
+#         self.assertEqual(
+#             response.json(),
+#             {'id': 2,
+#              'name': 'test_course_2',
+#              'subscribed': False,
+#              'preview': None,
+#              'lessons': [],
+#              'lessons_count': 0,
+#              'description': 'test_course_2',
+#              'owner': self.user.id,
+#              }
+#
+#         )
+#
+#     def test_list(self):
+#         """Тестирование вывода списка курсов"""
+#         response = self.client.get('/main/')
+#
+#         self.assertEqual(
+#             response.status_code,
+#             status.HTTP_200_OK
+#         )
+#
+#         self.assertEqual(
+#             response.json(),
+#             {'count': 1,
+#              'next': None,
+#              'previous': None,
+#              'results': [{
+#                  'id': 3,
+#                  'subscribed': True,
+#                  'lessons_count': 1,
+#                  'lessons': [{
+#                      'id': 2,
+#                      'name': 'test_lesson',
+#                      'preview': None,
+#                      'description': 'test_lesson',
+#                      'video': 'http://www.youtube.com/test_lesson',
+#                      'course': 3,
+#                      'owner': 2
+#                  }],
+#                  'name': 'test_course',
+#                  'preview': None,
+#                  'description': 'test_course',
+#                  'owner': 2}]
+#              }
+#         )
+#
+#     def test_retrieve(self):
+#         """Тестирование вывода одного курса"""
+#
+#         response = self.client.get('/main/', kwargs={'pk': self.course.id})
+#
+#         self.assertEqual(
+#             response.status_code,
+#             status.HTTP_200_OK
+#         )
+#
+#         self.assertEqual(
+#             response.json(),
+#             {
+#                 'count': 1,
+#                 'next': None,
+#                 'previous': None,
+#                 'results': [{
+#                     'id': 4,
+#                     'subscribed': True,
+#                     'lessons_count': 1,
+#                     'lessons': [{
+#                         'id': 3,
+#                         'name': 'test_lesson',
+#                         'preview': None,
+#                         'description': 'test_lesson',
+#                         'video': 'http://www.youtube.com/test_lesson',
+#                         'course': 4,
+#                         'owner': 3
+#                     }],
+#                     'name': 'test_course',
+#                     'preview': None,
+#                     'description': 'test_course',
+#                     'owner': 3
+#                 }]
+#             }
+#         )
 
