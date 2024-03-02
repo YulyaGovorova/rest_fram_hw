@@ -96,24 +96,34 @@ class PaymentRetrieveAPIView(generics.RetrieveAPIView):
 
 
 class PaymentCreateAPIView(generics.CreateAPIView):
-    serializer_class = PaymentCreateSerializer
+    serializer_class = PaymentSerializers
     stripe.api_key = os.getenv('STRIPE_API_KEY')
     serializer_class = PaymentCreateSerializer
     queryset = Payment.objects.all()
 
-    def get_object(self):
+    def create(self, request, *args, **kwargs):
+        stripe.api_key = os.getenv("STRIPE_API_KEY")
+        course_id = request.data.get("course")
 
-        session_id = self.request.query_params.get('session_id')
-        session = stripe.checkout.Session.retrieve(session_id)
+        user = self.request.user
+        data = {"user": user.id, "course": course_id, "is_confirmed": True}
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
 
-        payment_id = session.metadata['payment_id']
-        obj = get_object_or_404(self.get_queryset(), pk=payment_id)
+        response = stripe.PaymentIntent.create(
+            amount=2000,
+            currency="usd",
+            automatic_payment_methods={"enabled": True, "allow_redirects": "never"},
+        )
 
-        if not obj.is_paid:
-            if session.payment_status == 'paid':
-                obj.is_paid = True
-                obj.save()
-        return obj
+        stripe.PaymentIntent.confirm(
+            response.id,
+            payment_method="pm_card_visa",
+        )
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class SubscriptionCreateAPIView(generics.CreateAPIView):
