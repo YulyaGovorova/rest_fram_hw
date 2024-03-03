@@ -7,11 +7,13 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
+from config import settings
 from main.models import Course, Lesson, Payment, Subscription
 from main.pagination import CourseLessonPaginator
 from main.permissions import Moderator, UserOwner, UserPerm
 from main.serializers import CourseSerializers, LessonSerializers, PaymentSerializers, PaymentCreateSerializer, \
     SubscriptionSerializer
+from main.services import create_stripe_price, create_stripe_session, create_stripe_product
 
 from main.tasks import check_update_course
 
@@ -33,10 +35,10 @@ class CourseViewSet(viewsets.ModelViewSet):
             self.permission_classes = [IsAuthenticated, UserOwner]
         return [permission() for permission in self.permission_classes]
 
-    # def perform_create(self, serializer):
-    #     new_course = serializer.save()
-    #     new_course.user = self.request.user
-    #     new_course.save()
+    def perform_create(self, serializer):
+        new_course = serializer.save()
+        new_course.user = self.request.user
+        new_course.save()
 
     def perform_update(self, serializer):
         course_update = serializer.save()
@@ -96,34 +98,28 @@ class PaymentRetrieveAPIView(generics.RetrieveAPIView):
 
 
 class PaymentCreateAPIView(generics.CreateAPIView):
-    serializer_class = PaymentSerializers
-    stripe.api_key = os.getenv('STRIPE_API_KEY')
     serializer_class = PaymentCreateSerializer
     queryset = Payment.objects.all()
+    permission_classes = [AllowAny]
 
-    def create(self, request, *args, **kwargs):
-        stripe.api_key = os.getenv("STRIPE_API_KEY")
-        course_id = request.data.get("course")
-
+    def perform_create(self, serializer):
         user = self.request.user
-        data = {"user": user.id, "course": course_id, "is_confirmed": True}
-        serializer = self.get_serializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
+        course_id = self.request.data.get("course")
+        summ = self.request.data.get("summ")
+        product_id = create_stripe_product("Course Payment")
+        price_id = create_stripe_price(summ, "usd", product_id)
+        session_url, session_id = create_stripe_session(price_id, "https://127.0.0.1:8000/")
 
-        response = stripe.PaymentIntent.create(
-            amount=2000,
-            currency="usd",
-            automatic_payment_methods={"enabled": True, "allow_redirects": "never"},
+        serializer.save(
+            user=user,
+            course=course_id,
+            summ=summ,
+            product_id=product_id,
+            price_id=price_id,
+            session_url=session_url,
+            session_id=session_id,
         )
 
-        stripe.PaymentIntent.confirm(
-            response.id,
-            payment_method="pm_card_visa",
-        )
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class SubscriptionCreateAPIView(generics.CreateAPIView):
