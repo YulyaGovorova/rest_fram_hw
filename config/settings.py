@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'rest_framework_simplejwt',
     'corsheaders',
+    'django_celery_beat',
     'users',
     'main',
 ]
@@ -161,28 +162,44 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
 
-# CORS_ALLOWED_ORIGINS = [
-#     '<http://localhost:8000>',  # Замените на адрес вашего фронтенд-сервера
-# ]
-#
-# CSRF_TRUSTED_ORIGINS = [
-#     "https://read-and-write.example.com", #  Замените на адрес вашего фронтенд-сервера
-#     # и добавьте адрес бэкенд-сервера
-# ]
-#
-# CORS_ALLOW_ALL_ORIGINS = False
 
+# SWAGGER_SETTINGS = {
+#     'SECURITY_DEEFINITIONS':{
+#         'Basic': {
+#             'type': 'basic',
+#         },
+#         'Bearer':{
+#             'type': 'apiKey',
+#             'name': 'Autorization',
+#             'in': 'header',
+#         },
+#     }
+# }
 
-SWAGGER_SETTINGS = {
-    'SECURITY_DEEFINITIONS':{
-        'Basic': {
-            'type': 'basic',
-        },
-        'Bearer':{
-            'type': 'apiKey',
-            'name': 'Autorization',
-            'in': 'header',
-        },
-    }
+EMAIL_HOST = 'smtp.yandex.ru'
+EMAIL_PORT = 465
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True
+EMAIL_HOST_USER = 'tishyulya-1000@yandex.ru'
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
 }
 
+CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+# Расписание периодических задач Celery
+CELERY_BEAT_SCHEDULE = {
+    'deactivate-users': {
+        'task': 'users.tasks.check_last_login',
+        'schedule': timedelta(minutes=1),
+    },
+}
+
+
+
+
+STRIPE_API_KEY = os.getenv('STRIPE_API_KEY')
