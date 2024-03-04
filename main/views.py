@@ -13,7 +13,8 @@ from main.pagination import CourseLessonPaginator
 from main.permissions import Moderator, UserOwner, UserPerm
 from main.serializers import CourseSerializers, LessonSerializers, PaymentSerializers, PaymentCreateSerializer, \
     SubscriptionSerializer
-from main.services import create_stripe_price, create_stripe_session, create_stripe_product
+from main.services import create_payment
+# from main.services import create_stripe_price, create_stripe_session, create_stripe_product
 
 from main.tasks import check_update_course
 
@@ -102,24 +103,16 @@ class PaymentCreateAPIView(generics.CreateAPIView):
     queryset = Payment.objects.all()
     permission_classes = [AllowAny]
 
-    def perform_create(self, serializer):
-        user = self.request.user
-        course_id = self.request.data.get("course")
-        summ = self.request.data.get("summ")
-        product_id = create_stripe_product("Course Payment")
-        price_id = create_stripe_price(summ, "usd", product_id)
-        session_url, session_id = create_stripe_session(price_id, "https://127.0.0.1:8000/")
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
 
-        serializer.save(
-            user=user,
-            course=course_id,
-            summ=summ,
-            product_id=product_id,
-            price_id=price_id,
-            session_url=session_url,
-            session_id=session_id,
-        )
+        # Создание платежа с использованием вашего сервисного метода
+        payment = create_payment(serializer.validated_data)
 
+        headers = self.get_success_headers(serializer.data)
+        return Response({'url': payment.get_url_for_payment()}, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class SubscriptionCreateAPIView(generics.CreateAPIView):
