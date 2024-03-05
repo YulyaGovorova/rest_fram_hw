@@ -27,6 +27,7 @@ def create_payment(validated_data):
 
     # Создание сессии оплаты в Stripe
     session = stripe.checkout.Session.create(
+        payment_method_types=['card'],
         line_items=[
             {
                 'price': price.id,
