@@ -2,7 +2,7 @@ import stripe
 
 
 from config.settings import STRIPE_API_KEY
-from main.models import Payment
+
 
 stripe.api_key = STRIPE_API_KEY
 
@@ -11,7 +11,6 @@ def create_payment(validated_data):
     # Получение данных из validated_data
     paid_course = validated_data['paid_course']
     summ = validated_data['summ']
-    payment_method = validated_data['payment_method']
 
     # Создание продукта в Stripe
     product = stripe.Product.create(
@@ -28,27 +27,16 @@ def create_payment(validated_data):
 
     # Создание сессии оплаты в Stripe
     session = stripe.checkout.Session.create(
-        payment_method_types=[payment_method],  # Способ оплаты (transfer или cash)
-        line_items=[{
-            'price': price.id,
-            'quantity': 1
-        }],
+        line_items=[
+            {
+                'price': price.id,
+                'quantity': 1
+            }
+        ],
         mode='payment',
         success_url='https://127.0.0.1:8000/',  # URL для перенаправления после успешной оплаты
-
     )
-
-    # Сохранение данных платежа в базе данных
-    payment = Payment.objects.create(
-        paid_course=paid_course,
-        summ=summ,
-        payment_method=payment_method,
-        stripe_product_id=product.id,  # Сохраняем ID продукта из Stripe
-        stripe_price_id=price.id,  # Сохраняем ID цены из Stripe
-        stripe_session_id=session.id  # Сохраняем ID сессии из Stripe
-    )
-
-    return payment
+    return session
 
 # def create_stripe_product(name):
 #     product = stripe.Product.create(
