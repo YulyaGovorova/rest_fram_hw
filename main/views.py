@@ -1,20 +1,19 @@
-import stripe
-import os
+
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, generics, status
 from rest_framework.filters import OrderingFilter
-from rest_framework.generics import get_object_or_404
+
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
-from config import settings
+
 from main.models import Course, Lesson, Payment, Subscription
 from main.pagination import CourseLessonPaginator
 from main.permissions import Moderator, UserOwner, UserPerm
 from main.serializers import CourseSerializers, LessonSerializers, PaymentSerializers, PaymentCreateSerializer, \
     SubscriptionSerializer
 from main.services import create_payment
-# from main.services import create_stripe_price, create_stripe_session, create_stripe_product
+
 
 from main.tasks import check_update_course
 
@@ -109,10 +108,12 @@ class PaymentCreateAPIView(generics.CreateAPIView):
         self.perform_create(serializer)
 
         # Создание платежа с использованием вашего сервисного метода
-        payment = create_payment(serializer.validated_data)
-
+        session = create_payment(serializer.validated_data)
         headers = self.get_success_headers(serializer.data)
-        return Response({'url': payment.get_url_for_payment()}, status=status.HTTP_201_CREATED, headers=headers)
+
+        return Response({'url': session.url, 'session_id': session.id}, status=status.HTTP_201_CREATED, headers=headers)
+
+
 
 
 class SubscriptionCreateAPIView(generics.CreateAPIView):
