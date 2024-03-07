@@ -43,7 +43,7 @@ class CourseViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         course_update = serializer.save()
         if course_update:
-            check_update_course.delay(course_update.course_id)
+            check_update_course.delay(course_update.id)
 
 
 class LessonCreateAPIView(generics.CreateAPIView):
