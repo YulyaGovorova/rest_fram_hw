@@ -4,7 +4,7 @@ from users.models import User
 
 
 @shared_task
-def check_user_activity():
+def check_last_login():
     """Проверка непосещения сайта пользователем более 30 дней"""
     for user in User.objects.filter(is_active=True):
         if user.last_login:
